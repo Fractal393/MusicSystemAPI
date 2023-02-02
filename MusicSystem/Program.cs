@@ -13,7 +13,9 @@ builder.Services.AddSingleton<AlbumService>()
     .AddSingleton<SongByNameService>()
     .AddSingleton<PlaylistService>()
     .AddSingleton<PreviousPurchasesService>()
-    .AddSingleton<FilterService>();
+    .AddSingleton<FilterService>()
+    .AddSingleton<AddAlbumService>()
+    .AddSingleton<DeleteAlbumService>();
 
 var app = builder.Build();
 

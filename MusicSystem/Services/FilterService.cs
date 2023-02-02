@@ -20,7 +20,7 @@ namespace MusicSystem.Services
             public int ArtistId { get; set; }
             public int AlbumId { get; set; }
             public int GenreId { get; set; }
-            public string Name { get; set; }
+            public string? Name { get; set; }
 
         }
 
@@ -29,7 +29,7 @@ namespace MusicSystem.Services
 
             using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
             {
-                //await conn.OpenAsync();
+                await conn.OpenAsync();
                 conn.Open();
 
                 //SqlCommand query = new SqlCommand("select ArtistId, Album.AlbumId, GenreId, Track.Name from Track, Album where Album.AlbumId = Track.AlbumId and (@genreId is NULL or GenreId = @genreId) and (@albumid is NULL or Album.AlbumId = @albumId) and (@artistId is NULL or ArtistId = @artistId)", conn);
@@ -71,7 +71,6 @@ namespace MusicSystem.Services
                         AlbumId = reader.GetInt32("AlbumId"),
                         ArtistId = reader.GetInt32("ArtistId"),
                         GenreId = reader.GetInt32("GenreId"),
-
                     });
                 }
 

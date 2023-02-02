@@ -17,7 +17,7 @@ namespace MusicSystem.Services
         }
         public class TrackDTO
         {
-            public string Name { get; set; }
+            public string? Name { get; set; }
             public int AlbumId { get; set; }
             public int TrackId { get; set; }
         }
