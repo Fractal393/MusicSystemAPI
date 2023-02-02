@@ -1,5 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
-using System.Data;
+﻿using System.Data;
 using System.Data.SqlClient;
 using MusicSystem.Models;
 
@@ -16,35 +15,49 @@ namespace MusicSystem.Services
             _configuration = configuration;
         }
 
-        public List<GetPreviousPurchases> LoadListFromDB()
+        public class InvoiceDTO
         {
-            List<GetPreviousPurchases> lstmain = new List<GetPreviousPurchases>();
+            public int CustomerId { get; set; }
 
-            SqlConnection con = new SqlConnection(_configuration.GetConnectionString("DefaultConnection"));
-            SqlCommand cmd = new SqlCommand("select CustomerID, Invoice.InvoiceId, Track.TrackId, Name from Track, InvoiceLine, Invoice where Invoice.InvoiceId = InvoiceLine.InvoiceId and InvoiceLine.TrackId = Track.TrackId", con);
-            SqlDataAdapter da = new SqlDataAdapter(cmd);
-            DataTable dt = new DataTable();
-            da.Fill(dt);
+            public int InvoiceId { get; set; }
 
-            for (int i = 0; i < dt.Rows.Count; i++)
+            public int TrackId { get; set; }
+
+            public string Name { get; set; }
+        }
+        public async Task<List<InvoiceDTO>> GetPreviousPurchases(int customerId)
+        {
+            using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
             {
+                //await conn.OpenAsync();
+                conn.Open();
 
-                GetPreviousPurchases obj = new GetPreviousPurchases();
+                SqlCommand query = new SqlCommand("select CustomerID, Invoice.InvoiceId, Track.TrackId, Name from Track, InvoiceLine, Invoice where Invoice.InvoiceId = InvoiceLine.InvoiceId and InvoiceLine.TrackId = Track.TrackId and CustomerId = @customerId", conn);
+                query.Parameters.Add(new SqlParameter("@customerId", System.Data.SqlDbType.Int));
+                query.Parameters["@customerId"].Value= customerId;
 
-                obj.Name = dt.Rows[i]["Name"].ToString();
+                //SqlDataReader reader = await query.ExecuteReaderAsync();
+                SqlDataReader reader = query.ExecuteReader();
 
-                obj.TrackId = int.Parse(dt.Rows[i]["TrackId"].ToString());
+                List<InvoiceDTO> list = new List<InvoiceDTO>();
 
-                obj.InvoiceId = int.Parse(dt.Rows[i]["InvoiceId"].ToString());
+                while(reader.Read())
+                {
+                    list.Add(new InvoiceDTO
+                    {
+                        Name = reader.GetString("name"),
+                        InvoiceId = reader.GetInt32("InvoiceId"),
+                        TrackId = reader.GetInt32("TrackId"),
+                        CustomerId = reader.GetInt32("CustomerId"),
 
-                obj.CustomerId = int.Parse(dt.Rows[i]["CustomerId"].ToString());
+                    });
+                }
+
+                return list;
+                //await conn.CloseAsync();
 
 
-
-                lstmain.Add(obj);
             }
-
-            return lstmain;
 
         }
     }

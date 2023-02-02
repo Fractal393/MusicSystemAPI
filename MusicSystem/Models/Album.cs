@@ -1,13 +1,12 @@
 ﻿namespace MusicSystem.Models
 {
-    public class GetByFilters
+    public class Album
     {
-        public int GenreId { get; set; }
-        public string Name { get; set; }
-
         public int ArtistId { get; set; }
-
         public int AlbumId { get; set; }
+        //public int GenreId { get; set; }
+        //public string Name { get; set; }
+
         public string Title { get; set; }
 
     }

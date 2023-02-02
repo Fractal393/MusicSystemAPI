@@ -1,6 +1,6 @@
 ﻿namespace MusicSystem.Models
 {
-    public class GetSongByName
+    public class Track
     {
         public int TrackId { get; set; }
         public string Name { get; set; }

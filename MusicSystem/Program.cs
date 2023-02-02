@@ -1,4 +1,5 @@
 using MusicSystem.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,15 +9,11 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton<AlbumService>();
-builder.Services.AddSingleton<SongByNameService>();
-builder.Services.AddSingleton<PlaylistService>();
-builder.Services.AddSingleton<PreviousPurchasesService>();
-builder.Services.AddSingleton<FilterService>();
-
-
-
-//builder.Services.AddDbContext<MusicSystemAPIDbContext>(options => options.UseSqlServer(builder.Configuration.getConnectionString("DefaultConnection")));
+builder.Services.AddSingleton<AlbumService>()
+    .AddSingleton<SongByNameService>()
+    .AddSingleton<PlaylistService>()
+    .AddSingleton<PreviousPurchasesService>()
+    .AddSingleton<FilterService>();
 
 var app = builder.Build();
 

@@ -1,5 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
-using System.Data;
+﻿using System.Data;
 using System.Data.SqlClient;
 using MusicSystem.Models;
 
@@ -16,44 +15,44 @@ namespace MusicSystem.Services
             _configuration = configuration;
         }
 
+        public class PlaylistTrackDTO
+        {
+            public int PlaylistId { get; set; }
+            public int TrackId { get; set; }
+            public string Name { get; set; }
+        }
+
         //public static string sqlDataSource = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=world;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
 
-        public List<GetTracksByPlaylist> LoadListFromDB()
+        public async Task<List<PlaylistTrackDTO>> GetPlaylistSongs(int playlistId)
         {
-            List<GetTracksByPlaylist> lstmain = new List<GetTracksByPlaylist>();
-
-            SqlConnection con = new SqlConnection(_configuration.GetConnectionString("DefaultConnection"));
-            SqlCommand cmd = new SqlCommand("select PlaylistId, PlaylistTrack.TrackId, Name from Track,PlaylistTrack where PlaylistTrack.TrackId = Track.TrackId", con);
-            SqlDataAdapter da = new SqlDataAdapter(cmd);
-            DataTable dt = new DataTable();
-            da.Fill(dt);
-
-
-            //SqlDataReader sdr = cmd.ExecuteReader();
-            //while (sdr.Read())
-            //{
-            //    for (int i = 0; i < sdr.FieldCount; i++)
-            //    {
-            //        Console.WriteLine(sdr.GetValue(i));
-            //    }
-            //}
-
-
-            for (int i = 0; i < dt.Rows.Count; i++)
+            using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
             {
+                //await conn.OpenAsync();
+                conn.Open();
 
-                GetTracksByPlaylist obj = new GetTracksByPlaylist();
+                SqlCommand query = new SqlCommand("select PlaylistId, PlaylistTrack.TrackId, Name from Track,PlaylistTrack where PlaylistTrack.TrackId = Track.TrackId and PlaylistId = @playlistId", conn);
+                query.Parameters.Add(new SqlParameter("@playlistId", System.Data.SqlDbType.Int));
+                query.Parameters["@playlistId"].Value = playlistId;
 
-                obj.Name = dt.Rows[i]["Name"].ToString();
+                //SqlDataReader reader = await query.ExecuteReaderAsync();
+                SqlDataReader reader = query.ExecuteReader();
 
-                obj.TrackId = int.Parse(dt.Rows[i]["TrackId"].ToString());
+                List<PlaylistTrackDTO> list = new List<PlaylistTrackDTO>();
 
-                obj.PlaylistId = int.Parse(dt.Rows[i]["PlaylistId"].ToString());
+                while (reader.Read())
+                {
+                    list.Add(new PlaylistTrackDTO
+                    {
+                        Name = reader.GetString("name"),
+                        TrackId = reader.GetInt32("TrackId"),
+                        PlaylistId = reader.GetInt32("PlaylistId"),
+                    });
+                }
+                return list;
+                //await conn.CloseAsync();
 
-                lstmain.Add(obj);
             }
-
-            return lstmain;
 
         }
     }
