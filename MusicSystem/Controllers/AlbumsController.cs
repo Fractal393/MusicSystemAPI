@@ -1,43 +1,71 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MusicSystem.Models;
+using MusicSystem.Services;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace MusicSystem.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
+
     public class AlbumsController : ControllerBase
     {
-        // GET: api/<AlbumsController>
-        [HttpGet]
-        public IEnumerable<string> Get()
+        private readonly AlbumService albumService;
+       
+        public AlbumsController(AlbumService albumService)
         {
-            return new string[] { "value1", "value2" };
+            this.albumService = albumService;
         }
 
-        // GET api/<AlbumsController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        [HttpGet("Album/GetAll")]
+        public async Task<ActionResult<Album>> GetAll()
         {
-            return "value";
+            return Ok(await albumService.GetAll());
         }
 
-        // POST api/<AlbumsController>
-        [HttpPost]
-        public void Post([FromBody] string value)
+        [HttpGet("Album/GetById{albumId}")]
+        public async Task<ActionResult<Album>> GetById(int albumId)
         {
+            var album = albumService.GetById(albumId);
+
+            if (album == null)
+                return NotFound();
+
+            return Ok(await album);
         }
 
-        // PUT api/<AlbumsController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPost("Album/Add")]
+        public async Task<IActionResult> Add(Album album)
         {
+            var result = await albumService.Add(album);
+            return CreatedAtAction(nameof(GetById), new { albumId = album.AlbumId }, album);
         }
 
-        // DELETE api/<AlbumsController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        [HttpPut("Album/Update")]
+        public async Task<IActionResult> Update(int albumId, Album album)
         {
+            if (albumId != album.AlbumId)
+                return BadRequest();
+
+            var existingAlbum = await albumService.GetById(albumId);
+
+            if (existingAlbum == null)
+                return NotFound();
+
+            albumService.Update(album);
+            return NoContent();
+        }
+
+        [HttpDelete("Album/Delete{albumId}")]
+        public async Task<IActionResult> Delete(int albumId)
+        {
+            var album = await albumService.GetById(albumId);
+
+            if (album == null)
+                return NotFound();
+
+            albumService.Delete(albumId);
+
+            return NoContent();
         }
     }
 }

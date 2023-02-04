@@ -1,42 +1,81 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MusicSystem.Services;
 using MusicSystem.Models;
-using System.Diagnostics;
-using static MusicSystem.Services.AlbumService;
-using static MusicSystem.Services.FilterService;
-using static MusicSystem.Services.PlaylistService;
-using static MusicSystem.Services.PreviousPurchasesService;
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace MusicSystem.Controllers
 {
-    public class MusicSystemController : ControllerBase
+    public class CustomersController : ControllerBase
     {
-        // GET: api/<ValuesController>
-        private readonly AlbumService albumService;
-        private readonly SongByNameService songByNameService;
-        private readonly PlaylistService playlistService;
-        private readonly PreviousPurchasesService previousPurchasesService;
-        private readonly FilterService filterService;
-        private readonly AddAlbumService addAlbumService;
-        private readonly DeleteAlbumService deleteAlbumService;
-        public MusicSystemController(AlbumService albumService, SongByNameService songByNameService, PlaylistService playlistService, PreviousPurchasesService previousPurchasesService, FilterService filterService, AddAlbumService addAlbumService, DeleteAlbumService deleteAlbumService)
+        private readonly CustomerService customerService;
+        public CustomersController(CustomerService customerService)
         {
-            this.albumService = albumService;
-            this.songByNameService = songByNameService;
-            this.playlistService = playlistService;
-            this.playlistService = playlistService;
-            this.previousPurchasesService = previousPurchasesService;
-            this.filterService = filterService;
-            this.addAlbumService = addAlbumService;
-            this.deleteAlbumService = deleteAlbumService;
+            this.customerService = customerService;
         }
 
-        [HttpGet("GetAlbum/{albumId}")]
-        public ActionResult<List<TrackDTO>> GetAlbums(int albumId)
+        [HttpGet("Customer/GetAll")]
+        public async Task<ActionResult<Customer>> GetAll()
         {
-            return Ok(albumService.GetAlbumById(albumId));
+            return Ok(await customerService.GetAll());
         }
+
+        [HttpGet("Customer/GetById{customerId}")]
+        public async Task<ActionResult<Customer>> GetById(int customerId)
+        {
+            var customer = customerService.GetById(customerId);
+
+            if (customer == null)
+                return NotFound();
+
+            return Ok(customer);
+        }
+
+        [HttpPost("Customer/Add")]
+        public async Task<IActionResult> Add(Customer customer)
+        {
+            customerService.Add(customer);
+            return CreatedAtAction(nameof(GetById), new { customerId = customer.CustomerId }, customer);
+        }
+
+        [HttpPut("Customer/Update")]
+        public async Task<IActionResult> Update(int customerId, Customer customer)
+        {
+            if (customerId != customer.CustomerId)
+                return BadRequest();
+
+            var existingCustomer = customerService.GetById(customerId);
+
+            if (existingCustomer == null)
+                return NotFound();
+
+            customerService.Update(customer);
+            return NoContent();
+        }
+
+        [HttpDelete("Customer/Delete{customerId}")]
+        public async Task<IActionResult> Delete(int customerId)
+        {
+            var customer = customerService.GetById(customerId);
+
+            if (customer == null)
+                return NotFound();
+
+            customerService.Delete(customerId);
+
+            return NoContent();
+        }
+
+        [HttpGet("Customer/GetPreviousPurchases/{customerId}")]
+        public async Task<ActionResult> GetPrevious(int customerId)
+        {
+            return Ok(await customerService.GetPreviousPurchases(customerId));
+        }
+
+        //[HttpGet("GetAlbum/{albumId}")]
+        //public ActionResult<List<TrackDTO>> GetAlbums(int albumId)
+        //{
+        //    return Ok(albumService.GetAlbumById(albumId));
+        //}
 
         //// GET api/<ValuesController>/5
         //[HttpGet("GetAlbum/{albumId}")]
@@ -51,48 +90,19 @@ namespace MusicSystem.Controllers
 
         //}
 
-        [HttpGet("GetSong/{songName}")]
+        
+        //[HttpPost("AddAlbum")]
+        //public ActionResult<List<Album>> AddAlbum(string title, int artistId)
+        //{
+        //    if (addAlbumService.Add(title, artistId) is not null) { return CreatedAtAction(nameof(GetAlbums), "New Record Inserted"); }
+        //    return NotFound();
+        //}
 
-        public ActionResult<List<Track>> GetSong(string songName)
-        {
-            return Ok(songByNameService.GetSongByName(songName));
-        }
+        //[HttpDelete("DeleteAlbum{albumId}")]
+        //public ActionResult DeleteAlbum(int albumId) {
+        //    return Ok(deleteAlbumService.DeleteAlbum(albumId)
+        //    );
+        //}
 
-        [HttpGet("GetPlaylist/{playlistId}")]
-
-        public ActionResult<List<PlaylistTrackDTO>> GetPlaylist(int playlistId)
-        {
-            //var playlist = playlistService.LoadListFromDB().Where(e => e.PlaylistId== playlistId).ToList();
-            //if (playlist == null)
-            //{
-            //    return NotFound();
-            //}
-            return Ok(playlistService.GetPlaylistSongs(playlistId));
-        }
-
-        [HttpGet("GetPreviousPurchases/{customerId}")]
-        public ActionResult<List<InvoiceDTO>> GetPrevious(int customerId)
-        {
-            return Ok(previousPurchasesService.GetPreviousPurchases(customerId));
-        }
-
-        [HttpGet("GetByFilter")]
-        public ActionResult<List<FilterDTO>> GetFilter(int? albumId, int? artistId, int? genreId)
-        {
-            return Ok(filterService.GetFilteredSongs(albumId, artistId, genreId));
-        }
-
-        [HttpPost("AddAlbum")]
-        public ActionResult<List<Album>> AddAlbum(string title, int artistId)
-        {
-            if (addAlbumService.AddNewAlbum(title, artistId) is not null) { return CreatedAtAction(nameof(GetAlbums), "New Record Inserted"); }
-            return NotFound();
-        }
-
-        [HttpDelete("DeleteAlbum{albumId}")]
-        public ActionResult DeleteAlbum(int albumId) {
-            return Ok(deleteAlbumService.DeleteAlbum(albumId)
-            );
-        }
     }
 }

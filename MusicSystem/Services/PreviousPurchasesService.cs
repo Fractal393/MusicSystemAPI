@@ -23,7 +23,7 @@ namespace MusicSystem.Services
 
             public int TrackId { get; set; }
 
-            public string Name { get; set; }
+            public string? Name { get; set; }
         }
         public async Task<List<InvoiceDTO>> GetPreviousPurchases(int customerId)
         {

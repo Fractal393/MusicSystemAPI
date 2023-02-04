@@ -1,33 +1,68 @@
 using Microsoft.AspNetCore.Mvc;
+using MusicSystem.Models;
+using MusicSystem.Services;
 
 namespace MusicSystem.Controllers
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class WeatherForecastController : ControllerBase
+    public class PlaylistsController : ControllerBase
     {
-        private static readonly string[] Summaries = new[]
-        {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    };
+        private readonly PlaylistService playlistService;
 
-        private readonly ILogger<WeatherForecastController> _logger;
-
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public PlaylistsController(PlaylistService playlistService)
         {
-            _logger = logger;
+            this.playlistService = playlistService;
         }
 
-        [HttpGet(Name = "GetWeatherForecast")]
-        public IEnumerable<WeatherForecast> Get()
+        [HttpGet("Playlist/GetAll")]
+        public async Task<ActionResult<PlaylistTrack>> GetAll()
         {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
+            return Ok(await playlistService.GetAll());
+        }
+
+        [HttpGet("Playlist/GetById{playlistId}")]
+        public async Task<ActionResult<PlaylistTrack>> GetById(int playlistId)
+        {
+            var playlistTrack = playlistService.GetById(playlistId);
+
+            if (playlistTrack == null)
+                return NotFound();
+
+            return Ok(playlistTrack);
+        }
+
+        [HttpPost("Playlist/Add")]
+        public async Task<IActionResult> Add(PlaylistTrack playlistTrack)
+        {
+            playlistService.Add(playlistTrack);
+            return CreatedAtAction(nameof(GetById), new { playlistId = playlistTrack.PlaylistId }, playlistTrack);
+        }
+
+        [HttpPut("Playlist/Update")]
+        public async Task<IActionResult> Update(int playlistId, PlaylistTrack playlistTrack)
+        {
+            if (playlistId != playlistTrack.PlaylistId)
+                return BadRequest();
+
+            var existingAlbum = playlistService.GetById(playlistId);
+
+            if (existingAlbum == null)
+                return NotFound();
+
+            playlistService.Update(playlistTrack);
+            return NoContent();
+        }
+
+        [HttpDelete("Playlist/Delete{playlistId}")]
+        public async Task<IActionResult> Delete(int playlistId)
+        {
+            var playlistTrack = playlistService.GetById(playlistId);
+
+            if (playlistTrack == null)
+                return NotFound();
+
+            playlistService.Delete(playlistId);
+
+            return NoContent();
         }
     }
 }

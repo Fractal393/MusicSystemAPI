@@ -20,6 +20,7 @@ namespace MusicSystem.Services
             public int ArtistId { get; set; }
             public int AlbumId { get; set; }
             public int GenreId { get; set; }
+            //public int PlaylistId { get; set; }
             public string? Name { get; set; }
 
         }
