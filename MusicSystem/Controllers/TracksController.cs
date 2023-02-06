@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MusicSystem.Models;
 using MusicSystem.Services;
-using static MusicSystem.Services.PlaylistService;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -15,16 +14,21 @@ namespace MusicSystem.Controllers
             this.trackService = trackService;
         }
 
-        [HttpGet("Track/GetAll")]
+        [HttpGet("Track")]
         public async Task<ActionResult<Track>> GetAll()
         {
-            return Ok(await trackService.GetAll());
+            var result = await trackService.GetAll();
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
         }
 
-        [HttpGet("Track/GetById{trackId}")]
+        [HttpGet("Track/{trackId}")]
         public async Task<ActionResult<Track>> GetById(int trackId)
         {
-            var track = trackService.GetById(trackId);
+            var track = await trackService.GetById(trackId);
 
             if (track == null)
                 return NotFound();
@@ -32,20 +36,25 @@ namespace MusicSystem.Controllers
             return Ok(track);
         }
 
-        [HttpPost("Track/Add")]
+        [HttpPost("Track")]
         public async Task<IActionResult> Add(Track track)
         {
-            trackService.Add(track);
-            return CreatedAtAction(nameof(GetById), new { trackId = track.TrackId }, track);
+            int result = await trackService.Add(track);
+            if (result > 0)
+            {
+                return CreatedAtAction(nameof(GetById), new { trackId = track.TrackId }, track);
+
+            }
+            return BadRequest();
         }
 
-        [HttpPut("Track/Update")]
+        [HttpPut("Track")]
         public async Task<IActionResult> Update(int trackId, Track track)
         {
             if (trackId != track.TrackId)
                 return BadRequest();
 
-            var existingTrack = trackService.GetById(trackId);
+            var existingTrack = await trackService.GetById(trackId);
 
             if (existingTrack == null)
                 return NotFound();
@@ -54,10 +63,10 @@ namespace MusicSystem.Controllers
             return NoContent();
         }
 
-        [HttpDelete("Track/Delete{trackId}")]
+        [HttpDelete("Track/{trackId}")]
         public async Task<IActionResult> Delete(int trackId)
         {
-            var track = trackService.GetById(trackId);
+            var track = await trackService.GetById(trackId);
 
             if (track == null)
                 return NotFound();
@@ -67,29 +76,38 @@ namespace MusicSystem.Controllers
             return NoContent();
         }
 
-        [HttpGet("Track/GetTrack/{trackName}")]
+        [HttpGet("Track/Name/{trackName}")]
 
-        public ActionResult<List<Track>> GetTrackByName(string trackName)
+        public async Task<ActionResult<List<Track>>> GetTrackByName(string trackName)
         {
-            return Ok(trackService.GetTrackByName(trackName));
+            var result = await trackService.GetTrackByName(trackName);
+            if (result == null)
+                return NotFound();
+            return Ok(result);
         }
 
-        [HttpGet("Track/GetPlaylist/{playlistId}")]
+        [HttpGet("Track/Playlist/{playlistId}")]
 
         public async Task<ActionResult> GetByPlaylistId(int playlistId)
         {
             //var playlist = customerService.LoadListFromDB().Where(e => e.CustomerId== customerId).ToList();
             //if (playlist == null)
             //{
-            //    return NotFound();
+            //    return NotFound(); 
             //}
-            return Ok(await trackService.GetByPlaylistId(playlistId));
+            var result = await trackService.GetByPlaylistId(playlistId);
+            if (result == null)
+                return NotFound();
+            return Ok(result);
         }
 
-        [HttpGet("Track/GetByFilter")]
+        [HttpGet("Track/Filter")]
         public async Task<ActionResult> GetByFilter(int? albumId, int? artistId, int? genreId)
         {
-            return Ok(await trackService.GetByFilter(albumId, artistId, genreId));
+            var result = await trackService.GetByFilter(albumId, artistId, genreId);
+            if (result == null)
+                return NotFound();
+            return Ok(result);
         }
 
     }

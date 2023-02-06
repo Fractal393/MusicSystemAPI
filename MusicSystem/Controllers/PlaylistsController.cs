@@ -13,16 +13,16 @@ namespace MusicSystem.Controllers
             this.playlistService = playlistService;
         }
 
-        [HttpGet("Playlist/GetAll")]
+        [HttpGet("Playlist")]
         public async Task<ActionResult<PlaylistTrack>> GetAll()
         {
             return Ok(await playlistService.GetAll());
         }
 
-        [HttpGet("Playlist/GetById{playlistId}")]
+        [HttpGet("Playlist/{playlistId}")]
         public async Task<ActionResult<PlaylistTrack>> GetById(int playlistId)
         {
-            var playlistTrack = playlistService.GetById(playlistId);
+            var playlistTrack = await playlistService.GetById(playlistId);
 
             if (playlistTrack == null)
                 return NotFound();
@@ -30,20 +30,26 @@ namespace MusicSystem.Controllers
             return Ok(playlistTrack);
         }
 
-        [HttpPost("Playlist/Add")]
+        [HttpPost("Playlist")]
         public async Task<IActionResult> Add(PlaylistTrack playlistTrack)
         {
-            playlistService.Add(playlistTrack);
-            return CreatedAtAction(nameof(GetById), new { playlistId = playlistTrack.PlaylistId }, playlistTrack);
+            int result = await playlistService.Add(playlistTrack);
+            if (result > 0)
+            {
+                return CreatedAtAction(nameof(GetById), new { playlistId = playlistTrack.PlaylistId }, playlistTrack);
+
+            }
+            return BadRequest();
+
         }
 
-        [HttpPut("Playlist/Update")]
+        [HttpPut("Playlist")]
         public async Task<IActionResult> Update(int playlistId, PlaylistTrack playlistTrack)
         {
             if (playlistId != playlistTrack.PlaylistId)
                 return BadRequest();
 
-            var existingAlbum = playlistService.GetById(playlistId);
+            var existingAlbum = await playlistService.GetById(playlistId);
 
             if (existingAlbum == null)
                 return NotFound();
@@ -52,10 +58,10 @@ namespace MusicSystem.Controllers
             return NoContent();
         }
 
-        [HttpDelete("Playlist/Delete{playlistId}")]
+        [HttpDelete("Playlist/{playlistId}")]
         public async Task<IActionResult> Delete(int playlistId)
         {
-            var playlistTrack = playlistService.GetById(playlistId);
+            var playlistTrack = await playlistService.GetById(playlistId);
 
             if (playlistTrack == null)
                 return NotFound();

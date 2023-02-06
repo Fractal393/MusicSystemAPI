@@ -1,6 +1,5 @@
-using MusicSystem.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
+using MusicSystem.Services;
 using System.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,13 +11,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddTransient<IDbConnection>(conn => new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Chinook;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"));
-builder.Services.AddSingleton<AlbumService>()
-    .AddSingleton<SongByNameService>()
-    .AddSingleton<PlaylistService>()
-    .AddSingleton<PreviousPurchasesService>()
-    .AddSingleton<FilterService>()
-    .AddSingleton<TrackService>()
-    .AddSingleton<CustomerService>();
+builder.Services.AddSingleton<AlbumService>().AddSingleton<PlaylistService>().AddSingleton<TrackService>().AddSingleton<CustomerService>();
 
 
 var app = builder.Build();

@@ -1,6 +1,6 @@
-﻿using System.Data;
+﻿using MusicSystem.Models;
+using System.Data;
 using System.Data.SqlClient;
-using MusicSystem.Models;
 
 
 namespace MusicSystem.Services
@@ -44,7 +44,7 @@ namespace MusicSystem.Services
                     });
                 }
 
-               return list;
+                return list;
 
             }
         }

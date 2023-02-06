@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MusicSystem.Services;
 using MusicSystem.Models;
+using MusicSystem.Services;
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace MusicSystem.Controllers
@@ -13,16 +13,16 @@ namespace MusicSystem.Controllers
             this.customerService = customerService;
         }
 
-        [HttpGet("Customer/GetAll")]
-        public async Task<ActionResult<Customer>> GetAll()
+        [HttpGet("Customer")]
+        public async Task<ActionResult> GetAll()
         {
             return Ok(await customerService.GetAll());
         }
 
-        [HttpGet("Customer/GetById{customerId}")]
+        [HttpGet("Customer/{customerId}")]
         public async Task<ActionResult<Customer>> GetById(int customerId)
         {
-            var customer = customerService.GetById(customerId);
+            var customer = await customerService.GetById(customerId);
 
             if (customer == null)
                 return NotFound();
@@ -30,20 +30,25 @@ namespace MusicSystem.Controllers
             return Ok(customer);
         }
 
-        [HttpPost("Customer/Add")]
+        [HttpPost("Customer")]
         public async Task<IActionResult> Add(Customer customer)
         {
-            customerService.Add(customer);
-            return CreatedAtAction(nameof(GetById), new { customerId = customer.CustomerId }, customer);
+            int result = await customerService.Add(customer);
+            if (result > 0)
+            {
+                return CreatedAtAction(nameof(GetById), new { customerId = customer.CustomerId }, customer);
+
+            }
+            return BadRequest();
         }
 
-        [HttpPut("Customer/Update")]
+        [HttpPut("Customer")]
         public async Task<IActionResult> Update(int customerId, Customer customer)
         {
             if (customerId != customer.CustomerId)
                 return BadRequest();
 
-            var existingCustomer = customerService.GetById(customerId);
+            var existingCustomer = await customerService.GetById(customerId);
 
             if (existingCustomer == null)
                 return NotFound();
@@ -52,10 +57,10 @@ namespace MusicSystem.Controllers
             return NoContent();
         }
 
-        [HttpDelete("Customer/Delete{customerId}")]
+        [HttpDelete("Customer/{customerId}")]
         public async Task<IActionResult> Delete(int customerId)
         {
-            var customer = customerService.GetById(customerId);
+            var customer = await customerService.GetById(customerId);
 
             if (customer == null)
                 return NotFound();
@@ -65,7 +70,7 @@ namespace MusicSystem.Controllers
             return NoContent();
         }
 
-        [HttpGet("Customer/GetPreviousPurchases/{customerId}")]
+        [HttpGet("Customer/PreviousPurchases/{customerId}")]
         public async Task<ActionResult> GetPrevious(int customerId)
         {
             return Ok(await customerService.GetPreviousPurchases(customerId));
@@ -90,7 +95,7 @@ namespace MusicSystem.Controllers
 
         //}
 
-        
+
         //[HttpPost("AddAlbum")]
         //public ActionResult<List<Album>> AddAlbum(string title, int artistId)
         //{

@@ -1,13 +1,22 @@
-﻿using Microsoft.AspNetCore.Mvc.Formatters;
-using MusicSystem.Models;
-using NuGet.DependencyResolver;
+﻿using MusicSystem.Models;
 using System.Data;
 using System.Data.SqlClient;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static MusicSystem.Services.PlaylistService;
 
 namespace MusicSystem.Services
 {
+    public static class ExtensionInt
+    {
+        public static int GetIntOrDefault(this SqlDataReader reader, string fieldName)
+        {
+            int colIndex = reader.GetOrdinal(fieldName);
+            if (!reader.IsDBNull(colIndex))
+            {
+                return reader.GetInt32(colIndex);
+            }
+            return 0;
+        }
+    }
     public class TrackService
     {
         private readonly IConfiguration _configuration;
@@ -20,103 +29,141 @@ namespace MusicSystem.Services
         }
         public async Task<List<Track>> GetAll()
         {
-            await _connection.OpenAsync();
-
-            SqlCommand query = new SqlCommand("Select * from Track", _connection);
-            SqlDataReader reader = await query.ExecuteReaderAsync();
-            List<Track> list = new List<Track>();
-
-            while (reader.Read())
+            try
             {
-                list.Add(new Track
-                {
-                    TrackId = reader.GetInt32("TrackId"),
-                    Name = reader.GetString("name"),
-                    AlbumId = reader.GetInt32("AlbumId"),
-                    MediaTypeId = reader.GetInt32("MediaTypeId"),
-                    GenreId = reader.GetInt32("GenreId"),
-                    Composer = reader.GetString("Composer"),
-                    Milliseconds = reader.GetInt32("Milliseconds"),
-                    Bytes = reader.GetInt32("Bytes"),
-                    UnitPrice = reader.GetDecimal("UnitPrice")
-                });
-            }
 
-            await _connection.CloseAsync();
-            return list;
+                await _connection.OpenAsync();
+
+                SqlCommand query = new SqlCommand("Select * from Track", _connection);
+                SqlDataReader reader = await query.ExecuteReaderAsync();
+                List<Track> list = new List<Track>();
+
+                while (reader.Read())
+                {
+                    list.Add(new Track
+                    {
+                        TrackId = reader.GetInt32("TrackId"),
+                        Name = reader.GetString("name"),
+                        AlbumId = reader.GetInt32("AlbumId"),
+                        MediaTypeId = reader.GetInt32("MediaTypeId"),
+                        GenreId = reader.GetInt32("GenreId"),
+                        Composer = reader.GetString("Composer"),
+                        Milliseconds = reader.GetInt32("Milliseconds"),
+                        Bytes = reader.GetInt32("Bytes"),
+                        UnitPrice = reader.GetDecimal("UnitPrice")
+                    });
+                }
+
+                return list;
+            }
+            finally
+            {
+                await _connection.CloseAsync();
+            }
         }
 
         public async Task<List<Track>> GetById(int trackId)
         {
-            await _connection.OpenAsync();
-            SqlCommand query = new SqlCommand("Select * from Track where TrackId = @trackId", _connection);
-            query.Parameters.AddWithValue("@trackId", trackId);
-            SqlDataReader reader = await query.ExecuteReaderAsync();
-            List<Track> list = new List<Track>();
-
-            while (reader.Read())
+            try
             {
-                list.Add(new Track
+
+                await _connection.OpenAsync();
+                SqlCommand query = new SqlCommand("Select * from Track where TrackId = @trackId", _connection);
+                query.Parameters.AddWithValue("@trackId", trackId);
+                SqlDataReader reader = await query.ExecuteReaderAsync();
+                List<Track> list = new List<Track>();
+
+                while (reader.Read())
                 {
-                    TrackId = reader.GetInt32("TrackId"),
-                    Name = reader.GetString("name"),
-                    AlbumId = reader.GetInt32("AlbumId"),
-                    MediaTypeId = reader.GetInt32("MediaTypeId"),
-                    GenreId = reader.GetInt32("GenreId"),
-                    Composer = reader.GetString("Composer"),
-                    Milliseconds = reader.GetInt32("Milliseconds"),
-                    Bytes = reader.GetInt32("Bytes"),
-                    UnitPrice = reader.GetDecimal("UnitPrice")
-                });
+                    list.Add(new Track
+                    {
+                        TrackId = reader.GetInt32("TrackId"),
+                        Name = reader.GetString("name"),
+                        AlbumId = reader.GetIntOrDefault("AlbumId"),
+                        MediaTypeId = reader.GetInt32("MediaTypeId"),
+                        GenreId = reader.GetIntOrDefault("GenreId"),
+                        Composer = reader.GetValueOrDefault("Composer"),
+                        Milliseconds = reader.GetInt32("Milliseconds"),
+                        Bytes = reader.GetIntOrDefault("Bytes"),
+                        UnitPrice = reader.GetDecimal("UnitPrice")
+                    });
+                }
+                return list;
             }
-            await _connection.CloseAsync();
-            return list;
+            finally
+            {
+                await _connection.CloseAsync();
+            }
         }
 
         public async void Delete(int trackId)
         {
-            await _connection.OpenAsync();
-            SqlCommand query = new SqlCommand("Delete from Track where TrackId = @trackId", _connection);
-            query.Parameters.AddWithValue("@trackId", trackId);
-            await query.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            try
+            {
+
+                await _connection.OpenAsync();
+                SqlCommand query = new SqlCommand("Delete from Track where TrackId = @trackId", _connection);
+                query.Parameters.AddWithValue("@trackId", trackId);
+                await query.ExecuteNonQueryAsync();
+            }
+            finally
+            {
+                await _connection.CloseAsync();
+
+            }
         }
 
         public async void Update(Track Track)
         {
-            await _connection.OpenAsync();
-            SqlCommand query = new SqlCommand("UPDATE Track set Composer = @composer where TrackId = @trackId", _connection);
-            query.Parameters.AddWithValue("@trackId", Track.TrackId);
-            query.Parameters.AddWithValue("@composer", Track.Composer);
-            await query.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            try
+            {
+
+                await _connection.OpenAsync();
+                SqlCommand query = new SqlCommand("UPDATE Track set Composer = @composer where TrackId = @trackId", _connection);
+                query.Parameters.AddWithValue("@trackId", Track.TrackId);
+                query.Parameters.AddWithValue("@composer", Track.Composer);
+                await query.ExecuteNonQueryAsync();
+            }
+            finally
+            {
+                await _connection.CloseAsync();
+            }
         }
 
-        public async void Add(Track Track)
+        public async Task<int> Add(Track Track)
         {
-            await _connection.OpenAsync();
-            SqlCommand query = new SqlCommand("INSERT INTO Track VALUES(@TrackId, @Name, @AlbumId , @MediaTypeId , @GenreId , @Composer, @Milliseconds, @Bytes , @UnitPrice)", _connection);
-            query.Parameters.AddWithValue("@TrackId", Track.TrackId);
-            query.Parameters.AddWithValue("@Name", Track.Name);
-            query.Parameters.AddWithValue("@AlbumId", Track.AlbumId);
-            query.Parameters.AddWithValue("@MediaTypeId", Track.MediaTypeId);
-            query.Parameters.AddWithValue("@GenreId", Track.GenreId);
-            query.Parameters.AddWithValue("@Composer", Track.Composer);
-            query.Parameters.AddWithValue("@Milliseconds", Track.Milliseconds);
-            query.Parameters.AddWithValue("@Bytes", Track.Bytes);
-            query.Parameters.AddWithValue("@UnitPrice", Track.UnitPrice);
-            await query.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            try
+            {
+
+                await _connection.OpenAsync();
+                SqlCommand query = new SqlCommand("INSERT INTO Track VALUES((select AlbumId + 1 from album order by AlbumId offset (select count(*) - 1 from album) Rows fetch next 1 rows only), @Name, @AlbumId , @MediaTypeId , @GenreId , @Composer, @Milliseconds, @Bytes , @UnitPrice)", _connection);
+                query.Parameters.AddWithValue("@Name", Track.Name);
+                query.Parameters.AddWithValue("@AlbumId", Track.AlbumId);
+                query.Parameters.AddWithValue("@MediaTypeId", Track.MediaTypeId);
+                query.Parameters.AddWithValue("@GenreId", Track.GenreId);
+                query.Parameters.AddWithValue("@Milliseconds", Track.Milliseconds);
+                query.Parameters.AddWithValue("@Bytes", Track.Bytes);
+                query.Parameters.AddWithValue("@Composer", Track.Composer);
+                query.Parameters.AddWithValue("@UnitPrice", Track.UnitPrice);
+                return await query.ExecuteNonQueryAsync();
+            }
+            finally
+            {
+
+                await _connection.CloseAsync();
+            }
         }
 
         public async Task<List<Track>> GetTrackByName(string track)
         {
-          
+            try
+            {
+
                 await _connection.OpenAsync();
 
                 SqlCommand query = new SqlCommand("select * from Track where Name = @track", _connection);
                 query.Parameters.AddWithValue("@track", track);
-             
+
                 SqlDataReader reader = query.ExecuteReader();
 
                 List<Track> list = new List<Track>();
@@ -134,11 +181,16 @@ namespace MusicSystem.Services
                         UnitPrice = reader.GetDecimal("UnitPrice")
                     });
                 }
-            await _connection.CloseAsync();
 
-            return list;
+                return list;
+            }
+            finally
+            {
+                await _connection.CloseAsync();
 
             }
+
+        }
 
         public class FilterDTO
         {
@@ -152,6 +204,9 @@ namespace MusicSystem.Services
 
         public async Task<List<FilterDTO>> GetByFilter(int? albumId, int? artistId, int? genreId)
         {
+            try
+            {
+
 
                 await _connection.OpenAsync();
 
@@ -192,17 +247,23 @@ namespace MusicSystem.Services
                     });
                 }
 
-                await _connection.CloseAsync();
                 return list;
             }
+            finally
+            {
+                await _connection.CloseAsync();
+
+            }
+        }
 
         public async Task<List<PlaylistTrackDTO>> GetByPlaylistId(int playlistId)
         {
-            using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
+            try
             {
-                await conn.OpenAsync();
 
-                SqlCommand query = new SqlCommand("select PlaylistId, PlaylistTrack.TrackId, Name from Track,PlaylistTrack where PlaylistTrack.TrackId = Track.TrackId and PlaylistId = @playlistId", conn);
+                await _connection.OpenAsync();
+
+                SqlCommand query = new SqlCommand("select PlaylistId, PlaylistTrack.TrackId, Name from Track,PlaylistTrack where PlaylistTrack.TrackId = Track.TrackId and PlaylistId = @playlistId", _connection);
                 query.Parameters.Add(new SqlParameter("@playlistId", System.Data.SqlDbType.Int));
                 query.Parameters["@playlistId"].Value = playlistId;
 
@@ -220,16 +281,20 @@ namespace MusicSystem.Services
                         PlaylistId = reader.GetInt32("PlaylistId"),
                     });
                 }
-                await conn.CloseAsync();
                 return list;
-
             }
+            finally
+            {
+
+                await _connection.CloseAsync();
+            }
+
 
         }
     }
 
 
-    }
+}
 
 
 

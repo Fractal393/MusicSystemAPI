@@ -10,19 +10,24 @@ namespace MusicSystem.Controllers
     public class AlbumsController : ControllerBase
     {
         private readonly AlbumService albumService;
-       
+
         public AlbumsController(AlbumService albumService)
         {
             this.albumService = albumService;
         }
 
-        [HttpGet("Album/GetAll")]
+        [HttpGet("Album")]
         public async Task<ActionResult<Album>> GetAll()
         {
-            return Ok(await albumService.GetAll());
+            var result = await albumService.GetAll();
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
         }
 
-        [HttpGet("Album/GetById{albumId}")]
+        [HttpGet("Album/{albumId}")]
         public async Task<ActionResult<Album>> GetById(int albumId)
         {
             var album = albumService.GetById(albumId);
@@ -33,14 +38,18 @@ namespace MusicSystem.Controllers
             return Ok(await album);
         }
 
-        [HttpPost("Album/Add")]
+        [HttpPost("Album")]
         public async Task<IActionResult> Add(Album album)
         {
             var result = await albumService.Add(album);
-            return CreatedAtAction(nameof(GetById), new { albumId = album.AlbumId }, album);
+            if (result > 0)
+            {
+                return CreatedAtAction(nameof(GetById), new { albumId = album.AlbumId }, album);
+            }
+            return BadRequest();
         }
 
-        [HttpPut("Album/Update")]
+        [HttpPut("Album")]
         public async Task<IActionResult> Update(int albumId, Album album)
         {
             if (albumId != album.AlbumId)
@@ -55,7 +64,7 @@ namespace MusicSystem.Controllers
             return NoContent();
         }
 
-        [HttpDelete("Album/Delete{albumId}")]
+        [HttpDelete("Album/{albumId}")]
         public async Task<IActionResult> Delete(int albumId)
         {
             var album = await albumService.GetById(albumId);

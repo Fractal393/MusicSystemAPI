@@ -1,9 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.EntityFrameworkCore;
+using MusicSystem.Models;
 using System.Data;
 using System.Data.SqlClient;
-using Microsoft.Build.Execution;
-using Microsoft.EntityFrameworkCore;
-using MusicSystem.Models;
 
 
 
@@ -27,7 +25,7 @@ namespace MusicSystem.Services
         //    public int TrackId { get; set; }
         //}
 
-        
+
 
         //public List<TrackDTO> GetAlbumById(int albumId)
         //{
@@ -60,79 +58,121 @@ namespace MusicSystem.Services
         //}
         public async Task<List<Album>> GetAll()
         {
-            await _connection.OpenAsync();
-
-            SqlCommand query = new SqlCommand("Select * from Album;", _connection);
-            SqlDataReader reader = await query.ExecuteReaderAsync();
-            List<Album> list = new List<Album>();
-
-            while (reader.Read())
+            try
             {
-                list.Add(new Album
-                {
-                    Title = reader.GetString("Title"),
-                    AlbumId = reader.GetInt32("AlbumId"),
-                    ArtistId = reader.GetInt32("ArtistId"),
-                });
-            }
-            await _connection.CloseAsync();
-            return list;
-        }
+                await _connection.OpenAsync();
 
+                SqlCommand query = new SqlCommand("Select * from Album;", _connection);
+                SqlDataReader reader = await query.ExecuteReaderAsync();
+                List<Album> list = new List<Album>();
+
+                while (reader.Read())
+                {
+                    list.Add(new Album
+                    {
+                        Title = reader.GetString("Title"),
+                        AlbumId = reader.GetInt32("AlbumId"),
+                        ArtistId = reader.GetInt32("ArtistId"),
+                    });
+                }
+                return list;
+            }
+            finally
+            {
+                await _connection.CloseAsync();
+            }
+        }
         public async Task<List<Album>> GetById(int albumId)
         {
-            await _connection.OpenAsync();
-            SqlCommand query = new SqlCommand("Select * from Album where AlbumId = @albumId", _connection);
-            query.Parameters.Add(new SqlParameter("@albumId", System.Data.SqlDbType.Int));
-            query.Parameters["@albumId"].Value = albumId;
-            SqlDataReader reader = await query.ExecuteReaderAsync();
-            List<Album> list = new List<Album>();
-
-            while (reader.Read())
+            try
             {
-                list.Add(new Album
+                await _connection.OpenAsync();
+                SqlCommand query = new SqlCommand("Select * from Album where AlbumId = @albumId", _connection);
+                query.Parameters.Add(new SqlParameter("@albumId", System.Data.SqlDbType.Int));
+                query.Parameters["@albumId"].Value = albumId;
+                SqlDataReader reader = await query.ExecuteReaderAsync();
+                List<Album> list = new List<Album>();
+
+                List<Album> fieldValues = new List<Album>();
+
+                while (reader.Read())
                 {
-                    Title = reader.GetString("Title"),
-                    AlbumId = reader.GetInt32("AlbumId"),
-                    ArtistId = reader.GetInt32("ArtistId"),
-                });
+                    //reader.GetList(fieldValues);
+                    //for (int i = 0; i < fieldValues.Count; i++)
+                    //{
+                    //    if (Convert.IsDBNull(fieldValues[i]))
+                    //        fieldValues[i] = null;
+                    //}
+                    //list.Add(fieldValues);
+                    list.Add(new Album
+                    {
+                        Title = reader.GetString("Title"),
+                        AlbumId = reader.GetInt32("AlbumId"),
+                        ArtistId = reader.GetInt32("ArtistId"),
+                    });
+
+                    //list.Add(new Album
+                    //{
+                    //    Title = fieldValues[0].ToString(),
+                    //    AlbumId = Convert.ToInt32(fieldValues[1]),
+                    //    ArtistId = Convert.ToInt32(fieldValues[2]),
+                    //});
+                }
+                return list;
             }
-            await _connection.CloseAsync();
-            return list;
+            finally
+            {
+                await _connection.CloseAsync();
+            }
         }
 
         public async void Delete(int albumId)
         {
-            await _connection.OpenAsync();
-            SqlCommand query = new SqlCommand("Delete from Album where AlbumId = @albumId", _connection);
-            query.Parameters.AddWithValue("@albumId", albumId);
-            await query.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            try
+            {
+                await _connection.OpenAsync();
+                SqlCommand query = new SqlCommand("Delete from Album where AlbumId = @albumId", _connection);
+                query.Parameters.AddWithValue("@albumId", albumId);
+                await query.ExecuteNonQueryAsync();
+            }
+            finally
+            {
+                await _connection.CloseAsync();
+            }
+            //await _connection.CloseAsync();
         }
 
         public async void Update(Album album)
         {
-            await _connection.OpenAsync();
-            SqlCommand query = new SqlCommand("UPDATE Album set Title = @title, ArtistId = @artistId where AlbumId = @albumId", _connection);
-            query.Parameters.AddWithValue("@title", album.Title);
-            query.Parameters.AddWithValue("@artistId", album.ArtistId);
-            query.Parameters.AddWithValue("@albumId", album.AlbumId);
-            await query.ExecuteNonQueryAsync();
-            await _connection.CloseAsync();
+            try
+            {
+                await _connection.OpenAsync();
+                SqlCommand query = new SqlCommand("UPDATE Album set Title = @title, ArtistId = @artistId where AlbumId = @albumId", _connection);
+                query.Parameters.AddWithValue("@title", album.Title);
+                query.Parameters.AddWithValue("@artistId", album.ArtistId);
+                query.Parameters.AddWithValue("@albumId", album.AlbumId);
+                await query.ExecuteNonQueryAsync();
+            }
+            finally
+            {
+                await _connection.CloseAsync();
+            }
         }
 
         public async Task<int> Add(Album album)
         {
-            await _connection.OpenAsync();
-            SqlCommand query = new SqlCommand("INSERT INTO Album VALUES((select AlbumId + 1 from album order by AlbumId offset (select count(*) - 1 from album) Rows fetch next 1 rows only) ,@title, @artistId)", _connection);
-            query.Parameters.AddWithValue("@title", album.Title);
-            query.Parameters.AddWithValue("@artistId", album.ArtistId);
-            //await _connection.CloseAsync ();
-            try {
+            try
+            {
+                await _connection.OpenAsync();
+                SqlCommand query = new SqlCommand("INSERT INTO Album VALUES((select AlbumId + 1 from album order by AlbumId offset (select count(*) - 1 from album) Rows fetch next 1 rows only) ,@title, @artistId)", _connection);
+                query.Parameters.AddWithValue("@title", album.Title);
+                query.Parameters.AddWithValue("@artistId", album.ArtistId);
+
                 return await query.ExecuteNonQueryAsync();
             }
             finally { await _connection.CloseAsync(); }
-            }
+        }
+
 
         //List<Tracks> lstmain = new List<Tracks>();
 
