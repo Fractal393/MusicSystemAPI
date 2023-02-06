@@ -25,16 +25,7 @@ namespace MusicSystem.Controllers
             return Ok(result);
         }
 
-        [HttpGet("Track/{trackId}")]
-        public async Task<ActionResult<Track>> GetById(int trackId)
-        {
-            var track = await trackService.GetById(trackId);
-
-            if (track == null)
-                return NotFound();
-
-            return Ok(track);
-        }
+        
 
         [HttpPost("Track")]
         public async Task<IActionResult> Add(Track track)
@@ -76,9 +67,20 @@ namespace MusicSystem.Controllers
             return NoContent();
         }
 
-        [HttpGet("Track/Name/{trackName}")]
+        [HttpGet("Track/{trackId}")]
+        public async Task<ActionResult<Track>> GetById(int trackId)
+        {
+            var track = await trackService.GetById(trackId);
 
-        public async Task<ActionResult<List<Track>>> GetTrackByName(string trackName)
+            if (track == null)
+                return NotFound();
+
+            return Ok(track);
+        }
+
+        [HttpGet("Tracks")]
+
+        public async Task<ActionResult<List<Track>>> GetTrackByName([FromQuery]string trackName)
         {
             var result = await trackService.GetTrackByName(trackName);
             if (result == null)
@@ -98,6 +100,18 @@ namespace MusicSystem.Controllers
             var result = await trackService.GetByPlaylistId(playlistId);
             if (result == null)
                 return NotFound();
+            return Ok(result);
+        }
+
+        [HttpGet("Track/Search/{keyword}")]
+
+        public async Task<ActionResult> Search(string keyword)
+        {
+            var result = await trackService.Search(keyword);
+            if (result == null)
+            {
+                return NotFound();
+            }
             return Ok(result);
         }
 

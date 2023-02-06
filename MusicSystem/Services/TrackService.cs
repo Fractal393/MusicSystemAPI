@@ -1,6 +1,7 @@
 ﻿using MusicSystem.Models;
 using System.Data;
 using System.Data.SqlClient;
+using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 using static MusicSystem.Services.PlaylistService;
 
 namespace MusicSystem.Services
@@ -77,10 +78,44 @@ namespace MusicSystem.Services
                 {
                     list.Add(new Track
                     {
-                        TrackId = reader.GetInt32("TrackId"),
+                        TrackId = reader.GetIntOrDefault("TrackId"),
                         Name = reader.GetString("name"),
                         AlbumId = reader.GetIntOrDefault("AlbumId"),
-                        MediaTypeId = reader.GetInt32("MediaTypeId"),
+                        MediaTypeId = reader.GetIntOrDefault("MediaTypeId"),
+                        GenreId = reader.GetIntOrDefault("GenreId"),
+                        Composer = reader.GetValueOrDefault("Composer"),
+                        Milliseconds = reader.GetInt32("Milliseconds"),
+                        Bytes = reader.GetIntOrDefault("Bytes"),
+                        UnitPrice = reader.GetDecimal("UnitPrice")
+                    });
+                }
+                return list;
+            }
+            finally
+            {
+                await _connection.CloseAsync();
+            }
+        }
+
+        public async Task<List<Track>> Search(string keyword)
+        {
+            try
+            {
+
+                await _connection.OpenAsync();
+                SqlCommand query = new SqlCommand("Select * from Track where name like @keyword", _connection);
+                query.Parameters.AddWithValue("@keyword", "%" + keyword + "%");
+                SqlDataReader reader = await query.ExecuteReaderAsync();
+                List<Track> list = new List<Track>();
+
+                while (reader.Read())
+                {
+                    list.Add(new Track
+                    {
+                        TrackId = reader.GetIntOrDefault("TrackId"),
+                        Name = reader.GetString("name"),
+                        AlbumId = reader.GetIntOrDefault("AlbumId"),
+                        MediaTypeId = reader.GetIntOrDefault("MediaTypeId"),
                         GenreId = reader.GetIntOrDefault("GenreId"),
                         Composer = reader.GetValueOrDefault("Composer"),
                         Milliseconds = reader.GetInt32("Milliseconds"),
@@ -109,7 +144,6 @@ namespace MusicSystem.Services
             finally
             {
                 await _connection.CloseAsync();
-
             }
         }
 
